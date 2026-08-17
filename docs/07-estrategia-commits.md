@@ -43,8 +43,9 @@ Tipos preferenciais:
 4. `feat: protege a API com autenticação e rate limiting`
 5. `test: cobre regras, contratos e concorrência`
 6. `docs: documenta o contrato seguro e as decisões`
+7. `fix: permite injetar o filtro de rate limiting` (correção revelada pelo primeiro `verify` completo)
 
-A branch literal nasce do sexto commit. Seus commits alteram somente os pontos em que o README prescreve um contrato diferente, para que o diff entre branches seja didático.
+A branch literal nasce do sétimo commit. Seus commits alteram somente os pontos em que o README prescreve um contrato diferente, para que o diff entre branches seja didático.
 
 ## Handoff entre agentes
 

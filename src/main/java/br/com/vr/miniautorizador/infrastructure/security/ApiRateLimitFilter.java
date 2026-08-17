@@ -9,6 +9,7 @@ import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -28,6 +29,7 @@ final class ApiRateLimitFilter extends OncePerRequestFilter {
     private final Clock clock;
     private final ConcurrentMap<String, Window> windows = new ConcurrentHashMap<>();
 
+    @Autowired
     ApiRateLimitFilter(ApiSecurityProperties properties, SecurityProblemWriter problemWriter) {
         this(properties, problemWriter, Clock.systemUTC());
     }
