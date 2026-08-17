@@ -1,0 +1,11 @@
+app:
+  security:
+    require-tls: false
+    password:
+      pepper: ${APP_SECURITY_PASSWORD_PEPPER:local-evaluation-only}
+    api:
+      reader-key: ${APP_SECURITY_READER_API_KEY}
+      writer-key: ${APP_SECURITY_WRITER_API_KEY}
+
+server:
+  address: 127.0.0.1

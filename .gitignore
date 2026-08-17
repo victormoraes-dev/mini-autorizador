@@ -1,0 +1,16 @@
+# Maven
+/target/
+.mvn/timing.properties
+
+# Local agent planning kept outside the assessment history
+/sdd/
+
+# IDEs and local operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Local runtime configuration
+.env
+*.log

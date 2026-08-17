@@ -1,0 +1,11 @@
+app:
+  security:
+    require-tls: ${APP_SECURITY_REQUIRE_TLS:true}
+    password:
+      pepper: ${APP_SECURITY_PASSWORD_PEPPER}
+    api:
+      reader-key: ${APP_SECURITY_READER_API_KEY}
+      writer-key: ${APP_SECURITY_WRITER_API_KEY}
+
+server:
+  forward-headers-strategy: framework
