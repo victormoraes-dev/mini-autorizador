@@ -67,6 +67,15 @@ class HttpErrorHandlerTest {
         assertThat(response.getBody().getDetail()).doesNotContain("database-secret");
     }
 
+    @Test
+    void preservesNotFoundForUnknownResources() {
+        MockHttpServletRequest request = request("GET", "/unknown");
+
+        ResponseEntity<ProblemDetail> response = handler.handleResourceNotFound(request);
+
+        assertProblem(response, HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", request.getRequestURI());
+    }
+
     private static MockHttpServletRequest request(String method, String path) {
         return new MockHttpServletRequest(method, path);
     }

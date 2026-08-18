@@ -562,7 +562,7 @@ Testcontainers sobe `mysql:5.7`, a mesma imagem do cenário, e valida:
 
 Resultado da validação final documentada:
 
-- 50 testes unitários;
+- 51 testes unitários;
 - 6 testes de integração;
 - `./mvnw clean verify` aprovado.
 

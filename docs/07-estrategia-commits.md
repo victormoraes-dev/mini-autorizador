@@ -45,8 +45,9 @@ Tipos preferenciais:
 6. `docs: documenta o contrato seguro e as decisões`
 7. `fix: permite injetar o filtro de rate limiting` (correção revelada pelo primeiro `verify` completo)
 8. `fix: alinha a serialização de erros ao Jackson 3` (compatibilidade de runtime com Spring Boot 4)
+9. `fix: preserva 404 para rotas inexistentes` (ajuste do fallback global de erros)
 
-A branch literal nasce do oitavo commit. Seus commits alteram somente os pontos em que o README prescreve um contrato diferente, para que o diff entre branches seja didático.
+A branch literal nasce do nono commit. Seus commits alteram somente os pontos em que o README prescreve um contrato diferente, para que o diff entre branches seja didático.
 
 ## Handoff entre agentes
 

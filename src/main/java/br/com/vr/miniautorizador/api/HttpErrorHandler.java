@@ -15,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.validation.method.ParameterErrors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,6 +124,17 @@ public class HttpErrorHandler {
                 "Invalid request value",
                 "A request value has an invalid format",
                 "VALIDATION_ERROR",
+                request));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleResourceNotFound(HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.NOT_FOUND,
+                "resource-not-found",
+                "Resource not found",
+                "The requested resource does not exist",
+                "RESOURCE_NOT_FOUND",
                 request));
     }
 

@@ -84,7 +84,7 @@ Os perfis possuem o mesmo contrato REST. A diferença é operacional:
 - Endpoints legados foram removidos.
 - Banco existente em V1 foi migrado manualmente com sucesso para V2.
 - Validação final em 2026-08-17: `./mvnw verify` concluído com sucesso.
-- 50 testes unitários e 6 testes de integração cobrem os dois perfis.
+- 51 testes unitários e 6 testes de integração cobrem os dois perfis.
 - Os dois perfis usam o mesmo contrato seguro; produção também foi validada em contexto HTTP isolado com o filtro TLS desligado somente pelo teste.
 - OpenAPI lista apenas os endpoints canônicos.
 - Concorrência de criação e débito foi validada com MySQL 5.7 real.
