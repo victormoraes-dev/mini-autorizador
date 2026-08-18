@@ -146,15 +146,15 @@ O projeto usa Maven Wrapper; não é necessário instalar Maven globalmente.
 
 ## Contrato implementado
 
-O texto original acima permanece como referência das regras de negócio, mas seus exemplos HTTP não são copiados quando conflitam com segurança ou boas práticas REST. O contrato canônico usa:
+Esta branch implementa literalmente os contratos descritos acima:
 
-- `POST /api/v1/cards`;
-- `GET /api/v1/cards/{cardId}`;
-- `POST /api/v1/transactions`.
+- `POST /cartoes` recebe `numeroCartao` e `senha` e devolve os mesmos campos;
+- `GET /cartoes/{numeroCartao}` devolve somente o saldo em texto;
+- `POST /transacoes` recebe `numeroCartao`, `senhaCartao` e `valor` e devolve `OK` ou o motivo textual da recusa.
 
-Todas as respostas são JSON; erros seguem RFC 9457. `cardId` é um UUID opaco, o número do cartão é mascarado em responses, e password nunca é retornado.
+Não há autenticação, rate limiting nem contrato OpenAPI nesta branch, pois o enunciado não os solicita. Também não há envelope JSON para saldo e transação nem tratamento adicional de erros fora das respostas enumeradas pelo README.
 
-Consulte [`docs/00-handoff.md`](docs/00-handoff.md) e [`docs/01-requisitos.md`](docs/01-requisitos.md) para o contrato completo e sua precedência sobre os exemplos legados.
+Consulte [`docs/09-comparacao-contratos.md`](docs/09-comparacao-contratos.md) para entender cada divergência em relação à branch `feature/api-following-good-practices`.
 
 ## Execução local
 
@@ -167,28 +167,11 @@ docker compose -f docker/docker-compose.yml up -d mysql
 Inicie a aplicação:
 
 ```bash
-APP_SECURITY_READER_API_KEY='reader-local-key-with-at-least-32-chars' \
-APP_SECURITY_WRITER_API_KEY='writer-local-key-with-at-least-32-chars' \
 SPRING_PROFILES_ACTIVE=avaliacao \
 ./mvnw spring-boot:run
 ```
 
-A API estará em `http://localhost:8080`. O perfil `avaliacao` permite HTTP somente para desenvolvimento local, mas usa o mesmo contrato seguro do perfil produtivo.
-Envie `X-API-Key` em todas as chamadas: a chave de leitura consulta cartões; a chave de escrita também cria cartões e autoriza transações. As chaves devem ser distintas e ter ao menos 32 caracteres.
-
-## Execução com perfil de produção
-
-O perfil produtivo exige um pepper externo e TLS direto ou sinalizado pelo proxy reverso:
-
-```bash
-APP_SECURITY_PASSWORD_PEPPER='obtenha-de-um-secret-manager' \
-APP_SECURITY_READER_API_KEY='obtenha-de-um-secret-manager' \
-APP_SECURITY_WRITER_API_KEY='obtenha-de-um-secret-manager' \
-SPRING_PROFILES_ACTIVE=producao \
-./mvnw spring-boot:run
-```
-
-Requisições HTTP sem contexto seguro recebem `426 Upgrade Required`. Quando o TLS termina no proxy, encaminhe corretamente `X-Forwarded-Proto: https` a partir de um proxy confiável.
+A API estará em `http://localhost:8080` e não exige headers adicionais.
 
 ## Testes
 
@@ -204,13 +187,6 @@ Suíte completa, incluindo integração com a imagem `mysql:5.7` via Testcontain
 ./mvnw clean verify
 ```
 
-## Documentação da API
-
-Com a aplicação em execução:
-
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
-- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
-
 ## Arquitetura e decisões
 
-O código usa DDD com domínio rico, portas e adaptadores. `Card` é o aggregate root e contém as regras de senha, saldo e débito. A documentação detalhada, o plano de testes, a estratégia de segurança e o handoff entre agentes estão em [`docs/`](docs/README.md).
+O contrato externo segue o README mesmo quando isso expõe PAN/senha ou usa status e bodies não convencionais. Onde o enunciado é silencioso, permanecem o domínio rico, senha persistida com hash, migrações Flyway e débito atômico para proteger o saldo em concorrência.
