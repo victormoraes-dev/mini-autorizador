@@ -43,6 +43,11 @@ class MySqlCardRepository implements CardRepository {
     }
 
     @Override
+    public Optional<Card> findByNumber(CardNumber cardNumber) {
+        return repository.findByCardNumber(cardNumber.value()).map(mapper::toDomain);
+    }
+
+    @Override
     @Transactional
     public boolean debitIfBalanceIsAvailable(CardId cardId, Money amount) {
         return repository.debitIfBalanceIsAvailable(cardId.toString(), amount.value()) == 1;

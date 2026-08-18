@@ -14,6 +14,8 @@ interface CardJpaRepository extends JpaRepository<CardJpaEntity, Long> {
 
     Optional<CardJpaEntity> findByPublicId(String publicId);
 
+    Optional<CardJpaEntity> findByCardNumber(String cardNumber);
+
     @Modifying(flushAutomatically = true)
     @Query(value = """
             INSERT IGNORE INTO cards (public_id, card_number, password_hash, balance)

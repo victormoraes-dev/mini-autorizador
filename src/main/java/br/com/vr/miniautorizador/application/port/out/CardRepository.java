@@ -15,5 +15,9 @@ public interface CardRepository {
 
     Optional<Card> findById(CardId cardId);
 
+    default Optional<Card> findByNumber(CardNumber cardNumber) {
+        return Optional.empty();
+    }
+
     boolean debitIfBalanceIsAvailable(CardId cardId, Money amount);
 }

@@ -10,6 +10,9 @@ import br.com.vr.miniautorizador.application.port.in.TransactionAuthorizationRes
 import br.com.vr.miniautorizador.application.port.out.CardRepository;
 import br.com.vr.miniautorizador.domain.model.AuthorizationResult;
 import br.com.vr.miniautorizador.domain.model.Card;
+import br.com.vr.miniautorizador.domain.model.CardNumber;
+import br.com.vr.miniautorizador.domain.model.CardPassword;
+import br.com.vr.miniautorizador.domain.model.Money;
 import br.com.vr.miniautorizador.domain.model.Transaction;
 import br.com.vr.miniautorizador.domain.service.PasswordHasher;
 
@@ -35,6 +38,21 @@ public class TransactionAuthorizer implements AuthorizeTransactionUseCase {
             return TransactionAuthorizationResult.CARD_NOT_FOUND;
         }
 
+        return authorize(card, transaction);
+    }
+
+    @Override
+    @Transactional
+    public TransactionAuthorizationResult authorize(CardNumber cardNumber, CardPassword password, Money amount) {
+        Card card = cardRepository.findByNumber(cardNumber).orElse(null);
+        if (card == null) {
+            LOGGER.info("Transaction denied because card {} was not found", cardNumber);
+            return TransactionAuthorizationResult.CARD_NOT_FOUND;
+        }
+        return authorize(card, Transaction.request(card.id(), password, amount));
+    }
+
+    private TransactionAuthorizationResult authorize(Card card, Transaction transaction) {
         AuthorizationResult domainResult = card.authorize(transaction, passwordHasher);
         if (domainResult == AuthorizationResult.INVALID_PASSWORD) {
             LOGGER.info("Transaction denied by password for card {}", transaction.cardId());

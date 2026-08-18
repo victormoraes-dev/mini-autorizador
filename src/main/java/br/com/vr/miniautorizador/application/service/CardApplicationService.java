@@ -55,4 +55,12 @@ public class CardApplicationService implements CreateCardUseCase, GetCardUseCase
                 .map(CardDetails::from)
                 .orElseThrow(CardNotFoundException::new);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CardDetails get(CardNumber cardNumber) {
+        return cardRepository.findByNumber(cardNumber)
+                .map(CardDetails::from)
+                .orElseThrow(CardNotFoundException::new);
+    }
 }
