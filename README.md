@@ -154,7 +154,8 @@ Esta branch implementa literalmente os contratos descritos acima:
 
 Não há autenticação, rate limiting nem contrato OpenAPI nesta branch, pois o enunciado não os solicita. Também não há envelope JSON para saldo e transação nem tratamento adicional de erros fora das respostas enumeradas pelo README.
 
-Consulte [`docs/09-comparacao-contratos.md`](docs/09-comparacao-contratos.md) para entender cada divergência em relação à branch `feature/api-following-good-practices`.
+Consulte [`BRANCHES.md`](BRANCHES.md) para entender cada divergência em relação
+à branch `feature/api-following-good-practices`.
 
 ## Execução local
 
