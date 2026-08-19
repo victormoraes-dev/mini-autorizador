@@ -40,6 +40,7 @@ class MiniAuthorizerApiIT {
     private static final String WRITER_KEY = "writer-integration-key-32-characters";
     private static final Pattern ID_PATTERN = Pattern.compile("\\\"id\\\":\\\"([^\\\"]+)\\\"");
 
+    @SuppressWarnings("resource") // The Testcontainers extension owns the shared container lifecycle.
     @Container
     static final MySQLContainer MYSQL = new MySQLContainer("mysql:5.7")
             .withDatabaseName("miniautorizador")
@@ -98,6 +99,7 @@ class MiniAuthorizerApiIT {
         Map<String, Object> stored = jdbcTemplate.queryForMap(
                 "SELECT public_id, password_hash FROM cards WHERE card_number = ?",
                 CARD_NUMBER);
+
         assertThat(stored.get("public_id")).isEqualTo(cardId);
         assertThat(stored.get("password_hash").toString())
                 .startsWith("pbkdf2-sha256$")
@@ -106,11 +108,13 @@ class MiniAuthorizerApiIT {
 
     @Test
     void exposesCanonicalOpenApiAndStructuredValidationErrors() {
+
         HttpResponse invalidCard = post("/api/v1/cards", Map.of("cardNumber", "", "password", "1234"));
         HttpResponse invalidTransaction = post("/api/v1/transactions", Map.of(
                 "cardId", UUID.randomUUID().toString(),
                 "password", "1234",
                 "amount", BigDecimal.ZERO));
+
         HttpResponse malformed = postJson("/api/v1/transactions", "{invalid-json");
         HttpResponse invalidId = get("/api/v1/cards/not-a-uuid");
 
@@ -129,6 +133,7 @@ class MiniAuthorizerApiIT {
                 .contains("cardNumber", "password", "cardId", "amount")
                 .contains("securitySchemes", "X-API-Key", "500")
                 .doesNotContain("\"/cartoes\"", "\"/transacoes\"");
+
         assertThat(get("/swagger-ui/index.html").status()).isEqualTo(200);
         assertThat(get("/cartoes/" + CARD_NUMBER).status()).isEqualTo(404);
     }
@@ -144,6 +149,7 @@ class MiniAuthorizerApiIT {
                 .baseUrl("http://localhost:" + port)
                 .defaultHeader("X-API-Key", READER_KEY)
                 .build();
+
         HttpResponse forbidden = reader.post()
                 .uri("/api/v1/cards")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -156,6 +162,7 @@ class MiniAuthorizerApiIT {
 
     @Test
     void authorizesOnlyOneOfTwoConcurrentTransactionsForTheSameBalance() throws Exception {
+
         String cardId = extractId(createCard().body());
         jdbcTemplate.update("UPDATE cards SET balance = 10.00 WHERE public_id = ?", cardId);
         CyclicBarrier start = new CyclicBarrier(2);
