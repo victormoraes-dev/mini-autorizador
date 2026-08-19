@@ -10,18 +10,15 @@ evolutivo.
 | Ref | Finalidade | Uso recomendado |
 | --- | --- | --- |
 | `main` | Implementação robusta e contrato canônico | Desenvolvimento, revisão e produção |
-| `reference-good-practices` | Ponteiro estável para a mesma referência robusta | Comparação explícita |
-| `feature/api-following-good-practices` | Histórico de desenvolvimento da solução robusta | Auditoria de commits |
 | `reference-readme-literal` | Ponteiro estável para a implementação literal | Demonstração e estudo |
-| `feature/api-following-readme-literal` | Histórico de desenvolvimento do contrato literal | Auditoria de commits |
 
-A branch literal não é candidata a produção. Ela existe para tornar visíveis
+A branch **reference-readme-literal** não é candidata a produção. Ela existe para tornar visíveis
 as consequências de seguir cada detalhe do README quando ele conflita com boas
 práticas de API.
 
 ## Diferenças principais
 
-| Tema | `main` / boas práticas | Implementação literal |
+| Tema | `main` (boas práticas) | Implementação literal do README.md |
 | --- | --- | --- |
 | Rotas | `/api/v1/cards` e `/api/v1/transactions` | `/cartoes` e `/transacoes` |
 | Identificador externo | UUID opaco | Número do cartão |
