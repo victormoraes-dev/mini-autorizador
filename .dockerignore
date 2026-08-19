@@ -1,0 +1,16 @@
+.git
+.gitignore
+.idea
+.vscode
+.mvn
+docs
+sdd
+target
+*.iml
+*.log
+Dockerfile*
+docker
+mvnw
+mvnw.cmd
+README.md
+BRANCHES.md

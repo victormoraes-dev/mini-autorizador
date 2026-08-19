@@ -174,6 +174,45 @@ finalidade de cada branch e instruções de navegação.
 
 ## Execução local
 
+### Aplicação e banco via Docker Compose
+
+Construa a imagem da aplicação e suba todo o ambiente:
+
+```bash
+docker compose -f docker/docker-compose.yml up --build -d
+```
+
+O Compose aguarda o MySQL ficar saudável antes de iniciar a aplicação. Para
+acompanhar a inicialização e conferir o estado dos containers:
+
+```bash
+docker compose -f docker/docker-compose.yml logs -f application
+docker compose -f docker/docker-compose.yml ps
+```
+
+A API estará em `http://localhost:8080` e o healthcheck em
+`http://localhost:8080/actuator/health`. O ambiente Docker usa chaves locais de
+avaliação por padrão; elas podem ser substituídas sem editar o arquivo:
+
+```bash
+APP_SECURITY_READER_API_KEY='outra-chave-de-leitura-com-32-chars' \
+APP_SECURITY_WRITER_API_KEY='outra-chave-de-escrita-com-32-chars' \
+docker compose -f docker/docker-compose.yml up --build -d
+```
+
+Para encerrar e remover os containers:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+O `Dockerfile` também pode ser construído isoladamente com
+`docker build -t mini-authorizer .`; para executar a imagem, forneça as mesmas
+variáveis declaradas no serviço `application` do Compose e uma instância MySQL
+acessível pelo container.
+
+### Aplicação no host e banco via Docker
+
 Suba o MySQL 5.7 fornecido:
 
 ```bash
