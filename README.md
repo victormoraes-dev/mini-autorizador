@@ -154,7 +154,23 @@ O texto original acima permanece como referência das regras de negócio, mas se
 
 Todas as respostas são JSON; erros seguem RFC 9457. `cardId` é um UUID opaco, o número do cartão é mascarado em responses, e password nunca é retornado.
 
-Consulte [`docs/00-handoff.md`](docs/00-handoff.md) e [`docs/01-requisitos.md`](docs/01-requisitos.md) para o contrato completo e sua precedência sobre os exemplos legados.
+## Estratégia de branches
+
+Esta `main` é a referência robusta e o contrato recomendado para evolução e
+produção. A branch `feature/api-following-readme-literal` preserva, de forma
+intencional, os endpoints, status e bodies descritos literalmente no enunciado
+para fins de comparação — ela não deve ser usada como base de produção.
+
+Use os ponteiros estáveis abaixo para comparar os contratos:
+
+```bash
+git diff main..reference-readme-literal
+git switch main
+git switch feature/api-following-readme-literal
+```
+
+Consulte [`BRANCHES.md`](BRANCHES.md) para a matriz completa de diferenças,
+finalidade de cada branch e instruções de navegação.
 
 ## Execução local
 
@@ -213,4 +229,6 @@ Com a aplicação em execução:
 
 ## Arquitetura e decisões
 
-O código usa DDD com domínio rico, portas e adaptadores. `Card` é o aggregate root e contém as regras de senha, saldo e débito. A documentação detalhada, o plano de testes, a estratégia de segurança e o handoff entre agentes estão em [`docs/`](docs/README.md).
+O código usa DDD com domínio rico, portas e adaptadores. `Card` é o aggregate
+root e contém as regras de senha, saldo e débito. A comparação entre o contrato
+recomendado e o contrato literal está em [`BRANCHES.md`](BRANCHES.md).
