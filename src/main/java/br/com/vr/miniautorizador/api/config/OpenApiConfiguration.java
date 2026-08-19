@@ -10,11 +10,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 
 @Configuration
-@OpenAPIDefinition(info = @Info(
-        title = "Mini Authorizer API",
-        version = "1.0.0",
-        description = "Creates benefit cards, retrieves balances and authorizes transactions."),
-        security = @SecurityRequirement(name = "apiKey"))
+@OpenAPIDefinition(
+        info = @Info(
+                title = "Mini Authorizer API",
+                version = "1.0.0",
+                description = "Creates benefit cards, retrieves balances and authorizes transactions."),
+                security = @SecurityRequirement(name = "apiKey"))
 @SecurityScheme(
         name = "apiKey",
         type = SecuritySchemeType.APIKEY,

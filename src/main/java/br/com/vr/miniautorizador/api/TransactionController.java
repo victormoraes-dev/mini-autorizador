@@ -30,49 +30,38 @@ import jakarta.validation.Valid;
 @Tag(name = "Transactions", description = "Card transaction authorization")
 public class TransactionController {
 
-    private final AuthorizeTransactionUseCase authorizeTransactionUseCase;
+        private final AuthorizeTransactionUseCase authorizeTransactionUseCase;
 
-    public TransactionController(AuthorizeTransactionUseCase authorizeTransactionUseCase) {
-        this.authorizeTransactionUseCase = authorizeTransactionUseCase;
-    }
+        public TransactionController(AuthorizeTransactionUseCase authorizeTransactionUseCase) {
+                this.authorizeTransactionUseCase = authorizeTransactionUseCase;
+        }
 
-    @PostMapping
-    @Operation(summary = "Authorize and atomically debit a card transaction")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Transaction authorized"),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid request",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Card not found",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(
-                    responseCode = "422",
-                    description = "Transaction denied",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Missing or invalid API key",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Writer permission required",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(responseCode = "429", description = "Rate limit exceeded",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Unexpected server error",
-                    content = @Content(schema = @Schema(implementation = ProblemResponse.class)))
-    })
-    public ResponseEntity<TransactionAuthorizationResponse> authorize(
-            @Valid @RequestBody AuthorizeTransactionRequest request) {
-        Transaction transaction = Transaction.request(
-                CardId.from(request.cardId()),
-                new CardPassword(request.password()),
-                new Money(request.amount()));
-        TransactionAuthorizationResult result = authorizeTransactionUseCase.authorize(transaction);
+        @PostMapping
+        @Operation(summary = "Authorize and atomically debit a card transaction")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Transaction authorized"),
+                        @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "404", description = "Card not found", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "422", description = "Transaction denied", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "401", description = "Missing or invalid API key", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "403", description = "Writer permission required", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "429", description = "Rate limit exceeded", content = @Content(schema = @Schema(implementation = ProblemResponse.class))),
+                        @ApiResponse(responseCode = "500", description = "Unexpected server error", content = @Content(schema = @Schema(implementation = ProblemResponse.class)))
+        })
+        public ResponseEntity<TransactionAuthorizationResponse> authorize(
+                        @Valid @RequestBody AuthorizeTransactionRequest request) {
 
-        return switch (result) {
-            case APPROVED -> ResponseEntity.ok(TransactionAuthorizationResponse.authorized());
-            case CARD_NOT_FOUND -> throw new CardNotFoundException();
-            case INVALID_PASSWORD, INSUFFICIENT_BALANCE -> throw new TransactionDeniedException(result);
-        };
-    }
+                Transaction transaction = Transaction.request(
+                                CardId.from(request.cardId()),
+                                new CardPassword(request.password()),
+                                new Money(request.amount()));
+
+                TransactionAuthorizationResult result = authorizeTransactionUseCase.authorize(transaction);
+
+                return switch (result) {
+                        case APPROVED -> ResponseEntity.ok(TransactionAuthorizationResponse.authorized());
+                        case CARD_NOT_FOUND -> throw new CardNotFoundException();
+                        case INVALID_PASSWORD, INSUFFICIENT_BALANCE -> throw new TransactionDeniedException(result);
+                };
+        }
 }

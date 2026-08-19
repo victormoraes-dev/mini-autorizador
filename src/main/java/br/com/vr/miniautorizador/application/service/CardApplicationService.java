@@ -33,6 +33,7 @@ public class CardApplicationService implements CreateCardUseCase, GetCardUseCase
     @Override
     @Transactional
     public CardDetails create(CardNumber cardNumber, CardPassword password) {
+
         if (cardRepository.existsByNumber(cardNumber)) {
             LOGGER.info("Card {} already exists", cardNumber);
             throw new CardAlreadyExistsException();

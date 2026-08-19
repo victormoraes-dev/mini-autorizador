@@ -48,10 +48,13 @@ final class ApiRateLimitFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+
         long now = clock.millis();
         String client = clientFingerprint(request);
         Window window = windows.computeIfAbsent(client, ignored -> new Window(now));
+
         if (!window.allow(now, properties.windowSeconds() * 1_000L, properties.requestsPerWindow())) {
+
             response.setHeader("Retry-After", Integer.toString(properties.windowSeconds()));
             problemWriter.write(
                     request,
@@ -63,34 +66,43 @@ final class ApiRateLimitFilter extends OncePerRequestFilter {
                     "RATE_LIMIT_EXCEEDED");
             return;
         }
+
         discardExpiredWindows(now);
         filterChain.doFilter(request, response);
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+
         String path = request.getRequestURI();
+
         return path.startsWith("/actuator/health")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui");
     }
 
     private void discardExpiredWindows(long now) {
+
         if (windows.size() <= MAX_TRACKED_CLIENTS) {
             return;
         }
+
         long oldestAllowed = now - properties.windowSeconds() * 1_000L;
         windows.entrySet().removeIf(entry -> entry.getValue().startedAt() < oldestAllowed);
     }
 
     private static String clientFingerprint(HttpServletRequest request) {
+
         String suppliedKey = request.getHeader(ApiKeyAuthenticationFilter.HEADER_NAME);
+
         String identity = suppliedKey == null || suppliedKey.isBlank()
                 ? "ip:" + request.getRemoteAddr()
                 : "key:" + suppliedKey;
         try {
+
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(identity.getBytes(StandardCharsets.UTF_8));
+
             return HexFormat.of().formatHex(digest);
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);

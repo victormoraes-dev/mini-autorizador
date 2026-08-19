@@ -32,18 +32,23 @@ final class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        
         String suppliedKey = request.getHeader(HEADER_NAME);
+        
         if (matches(suppliedKey, properties.writerKey())) {
+            
             authenticate("writer-client", List.of(
                     new SimpleGrantedAuthority("ROLE_READER"),
                     new SimpleGrantedAuthority("ROLE_WRITER")));
         } else if (matches(suppliedKey, properties.readerKey())) {
             authenticate("reader-client", List.of(new SimpleGrantedAuthority("ROLE_READER")));
         }
+        
         filterChain.doFilter(request, response);
     }
 
     private static void authenticate(String principal, List<SimpleGrantedAuthority> authorities) {
+        
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal, null, authorities));
     }

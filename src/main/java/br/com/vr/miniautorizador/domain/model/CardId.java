@@ -15,6 +15,7 @@ public record CardId(UUID value) {
 
     public static CardId from(String value) {
         Objects.requireNonNull(value, "Card id is required");
+        
         try {
             return new CardId(UUID.fromString(value));
         } catch (IllegalArgumentException exception) {

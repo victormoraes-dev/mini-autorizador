@@ -9,7 +9,6 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import br.com.vr.miniautorizador.application.exception.CardAlreadyExistsException;
 import br.com.vr.miniautorizador.application.exception.TransactionDeniedException;
 import br.com.vr.miniautorizador.application.port.in.TransactionAuthorizationResult;
 
@@ -85,6 +84,7 @@ class HttpErrorHandlerTest {
             HttpStatus status,
             String code,
             String instance) {
+
         assertThat(response.getStatusCode()).isEqualTo(status);
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_PROBLEM_JSON);
         assertThat(response.getBody()).isNotNull();

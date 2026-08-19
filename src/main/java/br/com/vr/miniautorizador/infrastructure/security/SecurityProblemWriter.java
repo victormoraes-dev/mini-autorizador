@@ -6,10 +6,9 @@ import java.net.URI;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
-import tools.jackson.databind.ObjectMapper;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import tools.jackson.databind.ObjectMapper;
 
 @Component
 final class SecurityProblemWriter {
@@ -28,8 +27,10 @@ final class SecurityProblemWriter {
             String title,
             String detail,
             String code) throws IOException {
+
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+
         objectMapper.writeValue(response.getOutputStream(), new SecurityProblem(
                 URI.create("urn:problem:" + type),
                 title,
