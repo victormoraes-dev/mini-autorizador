@@ -9,18 +9,18 @@ public record Balance(BigDecimal value) {
     public static final Balance INITIAL = new Balance(new BigDecimal("500.00"));
 
     public Balance {
+
         Objects.requireNonNull(value, "Balance is required");
+
         if (value.signum() < 0) {
             throw new IllegalArgumentException("Balance must not be negative");
         }
+
         if (value.scale() > Money.SCALE) {
             throw new IllegalArgumentException("Balance must have at most two decimal places");
         }
-        value = value.setScale(Money.SCALE, RoundingMode.UNNECESSARY);
-    }
 
-    public boolean canCover(Money amount) {
-        return value.compareTo(amount.value()) >= 0;
+        value = value.setScale(Money.SCALE, RoundingMode.UNNECESSARY);
     }
 
     public Balance debit(Money amount) {
@@ -28,5 +28,9 @@ public record Balance(BigDecimal value) {
             throw new InsufficientBalanceException();
         }
         return new Balance(value.subtract(amount.value()));
+    }
+
+    public boolean canCover(Money amount) {
+        return value.compareTo(amount.value()) >= 0;
     }
 }

@@ -10,9 +10,11 @@ public record Money(BigDecimal value) implements Comparable<Money> {
 
     public Money {
         Objects.requireNonNull(value, "Amount is required");
+
         if (value.signum() <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
+
         if (value.scale() > SCALE) {
             throw new IllegalArgumentException("Amount must have at most two decimal places");
         }

@@ -26,6 +26,7 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<String> authorize(@RequestBody AuthorizeTransactionRequest request) {
+
         TransactionAuthorizationResult result = authorizeTransactionUseCase.authorize(
                 new CardNumber(request.numeroCartao()),
                 new CardPassword(request.senhaCartao()),

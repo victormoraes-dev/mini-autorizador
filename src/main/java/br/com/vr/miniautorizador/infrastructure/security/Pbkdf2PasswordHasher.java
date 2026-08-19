@@ -41,6 +41,7 @@ public final class Pbkdf2PasswordHasher implements PasswordHasher {
         byte[] salt = new byte[properties.saltLength()];
         secureRandom.nextBytes(salt);
         byte[] derivedKey = derive(password, salt, properties.iterations(), properties.keyLength());
+
         try {
             String encoded = String.join(
                     SEPARATOR,
@@ -56,20 +57,26 @@ public final class Pbkdf2PasswordHasher implements PasswordHasher {
 
     @Override
     public boolean matches(CardPassword password, PasswordHash hash) {
+
         try {
             String[] parts = hash.value().split("\\$", -1);
+
             if (parts.length != 4 || !FORMAT_ALGORITHM.equals(parts[0])) {
                 return false;
             }
+
             int iterations = Integer.parseInt(parts[1]);
             byte[] salt = Base64.getDecoder().decode(parts[2]);
             byte[] expected = Base64.getDecoder().decode(parts[3]);
+
             if (iterations < 100_000 || iterations > 1_000_000
                     || salt.length < 16 || salt.length > 64
                     || expected.length < 32 || expected.length > 64) {
                 return false;
             }
+
             byte[] actual = derive(password, salt, iterations, expected.length * Byte.SIZE);
+
             try {
                 return MessageDigest.isEqual(expected, actual);
             } finally {
@@ -84,6 +91,7 @@ public final class Pbkdf2PasswordHasher implements PasswordHasher {
     private byte[] derive(CardPassword password, byte[] salt, int iterations, int keyLength) {
         char[] secret = combine(password.value(), properties.pepper());
         PBEKeySpec keySpec = new PBEKeySpec(secret, salt, iterations, keyLength);
+
         try {
             return SecretKeyFactory.getInstance(ALGORITHM).generateSecret(keySpec).getEncoded();
         } catch (GeneralSecurityException exception) {

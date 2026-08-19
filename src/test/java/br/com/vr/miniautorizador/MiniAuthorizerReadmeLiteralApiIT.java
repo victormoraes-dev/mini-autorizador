@@ -35,6 +35,7 @@ class MiniAuthorizerReadmeLiteralApiIT {
     private static final String CARD_NUMBER = "6549873025634501";
     private static final String PASSWORD = "1234";
 
+    @SuppressWarnings("resource") // The Testcontainers extension owns the shared container lifecycle.
     @Container
     static final MySQLContainer MYSQL = new MySQLContainer("mysql:5.7")
             .withDatabaseName("miniautorizador")
@@ -90,6 +91,7 @@ class MiniAuthorizerReadmeLiteralApiIT {
                 "SELECT password_hash FROM cards WHERE card_number = ?",
                 String.class,
                 CARD_NUMBER);
+
         assertThat(storedHash).startsWith("pbkdf2-sha256$").isNotEqualTo(PASSWORD);
     }
 
@@ -102,6 +104,7 @@ class MiniAuthorizerReadmeLiteralApiIT {
 
     @Test
     void authorizesOnlyOneConcurrentTransactionForTheAvailableBalance() throws Exception {
+
         createCard();
         jdbcTemplate.update("UPDATE cards SET balance = 10.00 WHERE card_number = ?", CARD_NUMBER);
         CyclicBarrier start = new CyclicBarrier(2);

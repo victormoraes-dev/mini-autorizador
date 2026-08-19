@@ -2,11 +2,19 @@ package br.com.vr.miniautorizador.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.vr.miniautorizador.application.exception.CardAlreadyExistsException;
 import br.com.vr.miniautorizador.application.exception.CardNotFoundException;
@@ -17,58 +25,64 @@ import br.com.vr.miniautorizador.domain.model.Card;
 import br.com.vr.miniautorizador.domain.model.CardId;
 import br.com.vr.miniautorizador.domain.model.CardNumber;
 import br.com.vr.miniautorizador.domain.model.CardPassword;
-import br.com.vr.miniautorizador.domain.model.Money;
 import br.com.vr.miniautorizador.domain.model.PasswordHash;
 import br.com.vr.miniautorizador.domain.service.PasswordHasher;
 
+@ExtendWith(MockitoExtension.class)
 class CardApplicationServiceTest {
 
     private static final CardId ID = CardId.from("7c97bca5-3c85-4a2d-aab8-2d06112b56e4");
     private static final CardNumber NUMBER = new CardNumber("6549873025634501");
     private static final CardPassword PASSWORD = new CardPassword("1234");
+    private static final PasswordHash HASH = new PasswordHash("encoded-password");
 
-    private RecordingCardRepository repository;
-    private RecordingPasswordHasher passwordHasher;
+    @Mock
+    private CardRepository repository;
+
+    @Mock
+    private PasswordHasher passwordHasher;
+
+    @InjectMocks
     private CardApplicationService service;
-
-    @BeforeEach
-    void setUp() {
-        repository = new RecordingCardRepository();
-        passwordHasher = new RecordingPasswordHasher();
-        service = new CardApplicationService(repository, passwordHasher);
-    }
 
     @Test
     void createsCardAndReturnsOnlySafeDetails() {
+        when(passwordHasher.hash(PASSWORD)).thenReturn(HASH);
+        when(repository.create(any(Card.class))).thenReturn(true);
+
         CardDetails result = service.create(NUMBER, PASSWORD);
 
         assertThat(result.id()).isNotNull();
         assertThat(result.maskedCardNumber()).isEqualTo("************4501");
         assertThat(result.balance()).isEqualByComparingTo("500.00");
-        assertThat(repository.card.passwordHash()).isEqualTo(new PasswordHash("encoded-password"));
+        ArgumentCaptor<Card> cardCaptor = ArgumentCaptor.forClass(Card.class);
+        verify(repository).create(cardCaptor.capture());
+        assertThat(cardCaptor.getValue().passwordHash()).isEqualTo(HASH);
     }
 
     @Test
     void rejectsKnownDuplicateWithoutHashingPasswordAgain() {
-        repository.card = restoredCard();
+        when(repository.existsByNumber(NUMBER)).thenReturn(true);
 
         assertThatThrownBy(() -> service.create(NUMBER, PASSWORD))
                 .isInstanceOf(CardAlreadyExistsException.class);
-        assertThat(passwordHasher.hashCalls).isZero();
-        assertThat(repository.createCalls).isZero();
+        verify(passwordHasher, never()).hash(any());
+        verify(repository, never()).create(any());
     }
 
     @Test
     void convertsConcurrentInsertIntoConflict() {
-        repository.createSucceeds = false;
+        when(passwordHasher.hash(PASSWORD)).thenReturn(HASH);
+        when(repository.create(any(Card.class))).thenReturn(false);
 
         assertThatThrownBy(() -> service.create(NUMBER, PASSWORD))
                 .isInstanceOf(CardAlreadyExistsException.class);
+        verify(repository).create(any(Card.class));
     }
 
     @Test
     void returnsExistingCardByOpaqueId() {
-        repository.card = restoredCard();
+        when(repository.findById(ID)).thenReturn(Optional.of(restoredCard()));
 
         CardDetails details = service.get(ID);
 
@@ -79,59 +93,14 @@ class CardApplicationServiceTest {
 
     @Test
     void reportsMissingCardWithoutLeakingSensitiveData() {
+        when(repository.findById(ID)).thenReturn(Optional.empty());
+
         assertThatThrownBy(() -> service.get(ID))
                 .isInstanceOf(CardNotFoundException.class)
                 .hasMessageNotContaining(NUMBER.value());
     }
 
     private static Card restoredCard() {
-        return Card.restore(ID, NUMBER, new PasswordHash("encoded-password"), Balance.INITIAL);
-    }
-
-    private static final class RecordingPasswordHasher implements PasswordHasher {
-
-        private int hashCalls;
-
-        @Override
-        public PasswordHash hash(CardPassword password) {
-            hashCalls++;
-            return new PasswordHash("encoded-password");
-        }
-
-        @Override
-        public boolean matches(CardPassword password, PasswordHash hash) {
-            return false;
-        }
-    }
-
-    private static final class RecordingCardRepository implements CardRepository {
-
-        private Card card;
-        private int createCalls;
-        private boolean createSucceeds = true;
-
-        @Override
-        public boolean existsByNumber(CardNumber cardNumber) {
-            return card != null;
-        }
-
-        @Override
-        public boolean create(Card newCard) {
-            createCalls++;
-            if (createSucceeds) {
-                card = newCard;
-            }
-            return createSucceeds;
-        }
-
-        @Override
-        public Optional<Card> findById(CardId cardId) {
-            return card != null && card.id().equals(cardId) ? Optional.of(card) : Optional.empty();
-        }
-
-        @Override
-        public boolean debitIfBalanceIsAvailable(CardId cardId, Money amount) {
-            throw new UnsupportedOperationException("Not needed by card service tests");
-        }
+        return Card.restore(ID, NUMBER, HASH, Balance.INITIAL);
     }
 }

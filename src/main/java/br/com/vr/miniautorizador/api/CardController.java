@@ -33,7 +33,9 @@ public class CardController {
 
     @PostMapping
     public ResponseEntity<CardResponse> create(@RequestBody CreateCardRequest request) {
+
         CardResponse response = new CardResponse(request.senha(), request.numeroCartao());
+
         try {
             createCardUseCase.create(
                     new CardNumber(request.numeroCartao()),
@@ -46,8 +48,10 @@ public class CardController {
 
     @GetMapping("/{numeroCartao}")
     public ResponseEntity<String> getBalance(@PathVariable String numeroCartao) {
+
         try {
             CardDetails card = getCardUseCase.get(new CardNumber(numeroCartao));
+
             return ResponseEntity.ok(card.balance().toPlainString());
         } catch (CardNotFoundException exception) {
             return ResponseEntity.notFound().build();

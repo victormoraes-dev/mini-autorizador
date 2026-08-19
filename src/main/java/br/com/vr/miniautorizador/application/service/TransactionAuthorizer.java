@@ -49,6 +49,7 @@ public class TransactionAuthorizer implements AuthorizeTransactionUseCase {
             LOGGER.info("Transaction denied because card {} was not found", cardNumber);
             return TransactionAuthorizationResult.CARD_NOT_FOUND;
         }
+
         return authorize(card, Transaction.request(card.id(), password, amount));
     }
 
@@ -58,6 +59,7 @@ public class TransactionAuthorizer implements AuthorizeTransactionUseCase {
             LOGGER.info("Transaction denied by password for card {}", transaction.cardId());
             return TransactionAuthorizationResult.INVALID_PASSWORD;
         }
+
         if (domainResult == AuthorizationResult.INSUFFICIENT_BALANCE) {
             LOGGER.info("Transaction denied by balance for card {}", transaction.cardId());
             return TransactionAuthorizationResult.INSUFFICIENT_BALANCE;
@@ -67,6 +69,7 @@ public class TransactionAuthorizer implements AuthorizeTransactionUseCase {
         boolean debited = cardRepository.debitIfBalanceIsAvailable(
                 transaction.cardId(),
                 transaction.amount());
+
         if (!debited) {
             LOGGER.info("Transaction denied after concurrent debit for card {}", transaction.cardId());
             return TransactionAuthorizationResult.INSUFFICIENT_BALANCE;

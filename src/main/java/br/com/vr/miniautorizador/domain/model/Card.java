@@ -21,6 +21,7 @@ public final class Card {
     public static Card issue(CardNumber number, CardPassword password, PasswordHasher passwordHasher) {
         Objects.requireNonNull(password, "Card password is required");
         Objects.requireNonNull(passwordHasher, "Password hasher is required");
+
         return new Card(CardId.generate(), number, passwordHasher.hash(password), Balance.INITIAL);
     }
 
@@ -36,6 +37,7 @@ public final class Card {
                 || !passwordHasher.matches(transaction.providedPassword(), passwordHash)) {
             return AuthorizationResult.INVALID_PASSWORD;
         }
+
         if (!balance.canCover(transaction.amount())) {
             return AuthorizationResult.INSUFFICIENT_BALANCE;
         }

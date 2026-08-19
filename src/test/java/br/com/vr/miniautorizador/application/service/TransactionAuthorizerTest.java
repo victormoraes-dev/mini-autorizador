@@ -1,11 +1,18 @@
 package br.com.vr.miniautorizador.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.vr.miniautorizador.application.port.in.TransactionAuthorizationResult;
 import br.com.vr.miniautorizador.application.port.out.CardRepository;
@@ -19,118 +26,87 @@ import br.com.vr.miniautorizador.domain.model.PasswordHash;
 import br.com.vr.miniautorizador.domain.model.Transaction;
 import br.com.vr.miniautorizador.domain.service.PasswordHasher;
 
+@ExtendWith(MockitoExtension.class)
 class TransactionAuthorizerTest {
 
     private static final CardId ID = CardId.from("7c97bca5-3c85-4a2d-aab8-2d06112b56e4");
     private static final CardNumber NUMBER = new CardNumber("6549873025634501");
     private static final PasswordHash HASH = new PasswordHash("test::1234");
 
-    private RecordingCardRepository repository;
-    private TransactionAuthorizer authorizer;
+    @Mock
+    private CardRepository repository;
 
-    @BeforeEach
-    void setUp() {
-        repository = new RecordingCardRepository();
-        authorizer = new TransactionAuthorizer(repository, new TestPasswordHasher());
-    }
+    @Mock
+    private PasswordHasher passwordHasher;
+
+    @InjectMocks
+    private TransactionAuthorizer authorizer;
 
     @Test
     void authorizesAndDebitsValidTransactionByOpaqueId() {
-        repository.card = restoredCard();
+        Card card = restoredCard();
+        Money amount = Money.of("10.00");
+        when(repository.findById(ID)).thenReturn(Optional.of(card));
+        when(passwordHasher.matches(new CardPassword("1234"), HASH)).thenReturn(true);
+        when(repository.debitIfBalanceIsAvailable(ID, amount)).thenReturn(true);
 
-        TransactionAuthorizationResult result = authorizer.authorize(transaction("1234", "10.00"));
+        TransactionAuthorizationResult result = authorizer.authorize(transaction("1234", amount));
 
         assertThat(result).isEqualTo(TransactionAuthorizationResult.APPROVED);
-        assertThat(repository.debitAttempts).isEqualTo(1);
-        assertThat(repository.lastDebitedId).isEqualTo(ID);
-        assertThat(repository.card.balance().value()).isEqualByComparingTo("490.00");
+        verify(repository).debitIfBalanceIsAvailable(ID, amount);
+        assertThat(card.balance().value()).isEqualByComparingTo("490.00");
     }
 
     @Test
     void prioritizesMissingCardBeforePasswordAndBalance() {
-        assertThat(authorizer.authorize(transaction("9999", "600.00")))
+        when(repository.findById(ID)).thenReturn(Optional.empty());
+
+        assertThat(authorizer.authorize(transaction("9999", Money.of("600.00"))))
                 .isEqualTo(TransactionAuthorizationResult.CARD_NOT_FOUND);
-        assertThat(repository.debitAttempts).isZero();
+        verifyNoInteractions(passwordHasher);
+        verify(repository, never()).debitIfBalanceIsAvailable(ID, Money.of("600.00"));
     }
 
     @Test
     void prioritizesInvalidPasswordBeforeInsufficientBalance() {
-        repository.card = restoredCard();
+        Card card = restoredCard();
+        when(repository.findById(ID)).thenReturn(Optional.of(card));
+        when(passwordHasher.matches(new CardPassword("9999"), HASH)).thenReturn(false);
 
-        assertThat(authorizer.authorize(transaction("9999", "600.00")))
+        assertThat(authorizer.authorize(transaction("9999", Money.of("600.00"))))
                 .isEqualTo(TransactionAuthorizationResult.INVALID_PASSWORD);
-        assertThat(repository.debitAttempts).isZero();
-        assertThat(repository.card.balance()).isEqualTo(Balance.INITIAL);
+        verify(repository, never()).debitIfBalanceIsAvailable(ID, Money.of("600.00"));
+        assertThat(card.balance()).isEqualTo(Balance.INITIAL);
     }
 
     @Test
     void rejectsInsufficientBalanceWithoutPersistenceDebit() {
-        repository.card = restoredCard();
+        Money amount = Money.of("500.01");
+        when(repository.findById(ID)).thenReturn(Optional.of(restoredCard()));
+        when(passwordHasher.matches(new CardPassword("1234"), HASH)).thenReturn(true);
 
-        assertThat(authorizer.authorize(transaction("1234", "500.01")))
+        assertThat(authorizer.authorize(transaction("1234", amount)))
                 .isEqualTo(TransactionAuthorizationResult.INSUFFICIENT_BALANCE);
-        assertThat(repository.debitAttempts).isZero();
+        verify(repository, never()).debitIfBalanceIsAvailable(ID, amount);
     }
 
     @Test
     void convertsLostConcurrencyRaceIntoInsufficientBalance() {
-        repository.card = restoredCard();
-        repository.atomicDebitSucceeds = false;
+        Money amount = Money.of("10.00");
+        when(repository.findById(ID)).thenReturn(Optional.of(restoredCard()));
+        when(passwordHasher.matches(new CardPassword("1234"), HASH)).thenReturn(true);
+        when(repository.debitIfBalanceIsAvailable(ID, amount)).thenReturn(false);
 
-        assertThat(authorizer.authorize(transaction("1234", "10.00")))
+        assertThat(authorizer.authorize(transaction("1234", amount)))
                 .isEqualTo(TransactionAuthorizationResult.INSUFFICIENT_BALANCE);
-        assertThat(repository.debitAttempts).isEqualTo(1);
+        verify(repository).debitIfBalanceIsAvailable(ID, amount);
     }
 
     private static Card restoredCard() {
         return Card.restore(ID, NUMBER, HASH, Balance.INITIAL);
     }
 
-    private static Transaction transaction(String password, String amount) {
-        return Transaction.request(ID, new CardPassword(password), Money.of(amount));
-    }
-
-    private static final class TestPasswordHasher implements PasswordHasher {
-
-        @Override
-        public PasswordHash hash(CardPassword password) {
-            return new PasswordHash("test::" + password.value());
-        }
-
-        @Override
-        public boolean matches(CardPassword password, PasswordHash hash) {
-            return hash.equals(hash(password));
-        }
-    }
-
-    private static final class RecordingCardRepository implements CardRepository {
-
-        private Card card;
-        private CardId lastDebitedId;
-        private int debitAttempts;
-        private boolean atomicDebitSucceeds = true;
-
-        @Override
-        public boolean existsByNumber(CardNumber cardNumber) {
-            return card != null;
-        }
-
-        @Override
-        public boolean create(Card newCard) {
-            card = newCard;
-            return true;
-        }
-
-        @Override
-        public Optional<Card> findById(CardId cardId) {
-            return card != null && card.id().equals(cardId) ? Optional.of(card) : Optional.empty();
-        }
-
-        @Override
-        public boolean debitIfBalanceIsAvailable(CardId cardId, Money amount) {
-            lastDebitedId = cardId;
-            debitAttempts++;
-            return atomicDebitSucceeds;
-        }
+    private static Transaction transaction(String password, Money amount) {
+        return Transaction.request(ID, new CardPassword(password), amount);
     }
 }

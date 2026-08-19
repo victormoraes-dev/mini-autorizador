@@ -4,6 +4,7 @@
 
 # Local agent planning kept outside the assessment history
 /sdd/
+/docs/
 
 # IDEs and local operating-system files
 .idea/
